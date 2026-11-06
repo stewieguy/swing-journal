@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1419">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Swing Journal">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Swing Trade Journal</title>
+<style>
+  :root{
+    --bg:#0f1419; --card:#18202a; --line:#263241; --txt:#e6edf3; --mut:#8b98a7;
+    --acc:#3b82f6; --ok:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  body{padding:env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom))}
+  .wrap{max-width:640px;margin:0 auto;padding:14px}
+  h1{font-size:18px;margin:6px 0 14px}
+  h2{font-size:15px;margin:0 0 10px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+  input,select,textarea{width:100%;background:#0f1419;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .seg button{padding:11px;border-radius:10px;border:1px solid var(--line);background:#0f1419;color:var(--txt);font-size:15px;font-weight:600}
+  .seg button.on.long{background:rgba(34,197,94,.15);border-color:var(--ok);color:var(--ok)}
+  .seg button.on.short{background:rgba(239,68,68,.15);border-color:var(--bad);color:var(--bad)}
+  .btn{width:100%;padding:13px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-size:16px;font-weight:600;margin-top:12px}
+  .btn.sec{background:#243040}
+  .btn.danger{background:#3a1d22;color:#ff8a8a}
+  .btn.sm{width:auto;padding:8px 12px;font-size:14px;margin:0}
+  .res{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .res .it{background:#0f1419;border:1px solid var(--line);border-radius:10px;padding:10px}
+  .res .k{font-size:12px;color:var(--mut)}
+  .res .v{font-size:18px;font-weight:700;margin-top:2px}
+  .res .big{grid-column:1/-1;border-color:var(--acc)}
+  .res .big .v{font-size:26px}
+  .msg{padding:10px 12px;border-radius:10px;font-size:14px;margin-top:10px}
+  .msg.err{background:rgba(239,68,68,.12);color:#ff9b9b}
+  .msg.warn{background:rgba(245,158,11,.12);color:#fbbf24}
+  .msg.ok{background:rgba(34,197,94,.12);color:#6ee79a}
+  .pos{color:var(--ok)} .neg{color:var(--bad)} .mut{color:var(--mut)}
+  .trade .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .trade .t{font-weight:700}
+  .tag{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+  .tag.long{color:var(--ok);border-color:var(--ok)} .tag.short{color:var(--bad);border-color:var(--bad)}
+  .meta{font-size:13px;color:var(--mut);margin-top:6px;word-break:break-word}
+  .acts{display:flex;gap:8px;margin-top:10px}
+  .acts input{flex:1}
+  nav{position:fixed;left:0;right:0;bottom:0;background:#121921;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+  nav button{flex:1;background:none;border:0;color:var(--mut);padding:10px 2px 9px;font-size:11px}
+  nav button .i{display:block;font-size:19px;line-height:1.1}
+  nav button.on{color:var(--acc)}
+  .hide{display:none}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .empty{text-align:center;color:var(--mut);padding:30px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📒 Swing Trade Journal</h1>
+
+  <!-- HESAPLA -->
+  <section id="tab-calc">
+    <div class="card">
+      <h2>Yeni işlem</h2>
+      <div class="row">
+        <div><label for="ticker">Ticker</label><input id="ticker" placeholder="NVDA" autocapitalize="characters" autocomplete="off"></div>
+        <div><label for="tf">Timeframe</label><input id="tf" placeholder="4H, 1D, 55m" autocomplete="off"></div>
+      </div>
+      <label>Yön</label>
+      <div class="seg" id="side">
+        <button type="button" data-v="LONG" class="long on">LONG</button>
+        <button type="button" data-v="SHORT" class="short">SHORT</button>
+      </div>
+      <div class="row">
+        <div><label for="entry">Entry</label><input id="entry" inputmode="decimal" placeholder="172.30"></div>
+        <div><label for="stop">Stop loss</label><input id="stop" inputmode="decimal" placeholder="165.50"></div>
+      </div>
+      <div class="row">
+        <div><label for="cap">Pozisyon üst limiti (%)</label><input id="cap" inputmode="decimal" placeholder="14"></div>
+        <div><label>Sizing bakiyesi</label><input id="balView" disabled></div>
+      </div>
+      <label for="notes">Not (opsiyonel)</label>
+      <textarea id="notes" rows="2" placeholder="Setup, gerekçe..."></textarea>
+    </div>
+
+    <div class="card" id="resCard">
+      <h2>Sonuç</h2>
+      <div id="resBody" class="mut">Entry, stop ve limit gir.</div>
+    </div>
+    <button class="btn" id="saveBtn" disabled>İşlemi kaydet</button>
+    <button class="btn sec" id="clearBtn">Formu temizle</button>
+  </section>
+
+  <!-- AÇIK -->
+  <section id="tab-open" class="hide"></section>
+  <!-- GEÇMİŞ -->
+  <section id="tab-hist" class="hide"></section>
+  <!-- İSTATİSTİK -->
+  <section id="tab-stats" class="hide"></section>
+
+  <!-- AYARLAR -->
+  <section id="tab-set" class="hide">
+    <div class="card">
+      <h2>Sizing</h2>
+      <label for="setBal">Sizing bakiyesi ($)</label>
+      <input id="setBal" inputmode="decimal" placeholder="27250">
+      <label for="setRisk">İşlem başı max risk (%)</label>
+      <input id="setRisk" inputmode="decimal" placeholder="1">
+      <button class="btn" id="setSave">Kaydet</button>
+      <div id="setMsg"></div>
+    </div>
+    <div class="card">
+      <h2>Yedek</h2>
+      <p class="mut" style="margin-top:0;font-size:14px">Veriler sadece bu cihazın tarayıcısında durur. Telefon ↔ PC arasında taşımak veya yedeklemek için dışa/içe aktar.</p>
+      <button class="btn sec" id="exJson">JSON yedeği indir</button>
+      <button class="btn sec" id="exCsv">CSV indir (Excel / pandas)</button>
+      <button class="btn sec" id="imBtn">JSON yedeğini yükle</button>
+      <input type="file" id="imFile" accept="application/json,.json" class="hide">
+      <div id="bkMsg"></div>
+    </div>
+    <div class="card">
+      <h2>Tehlikeli bölge</h2>
+      <button class="btn danger" id="wipe">Tüm verileri sil</button>
+    </div>
+  </section>
+</div>
+
+<nav id="nav">
+  <button data-t="calc" class="on"><span class="i">🧮</span>Hesapla</button>
+  <button data-t="open"><span class="i">🟢</span>Açık</button>
+  <button data-t="hist"><span class="i">📒</span>Geçmiş</button>
+  <button data-t="stats"><span class="i">📊</span>Stats</button>
+  <button data-t="set"><span class="i">⚙️</span>Ayarlar</button>
+</nav>
+
+<script>
+"use strict";
+/* ---------- Depolama ---------- */
+const KEY = "swing_journal_v1";
+const QTY_DECIMALS = 4;
+const $ = (id) => document.getElementById(id);
+
+function defaultState(){ return { balance: 0, maxRiskPct: 1, nextId: 1, trades: [] }; }
+function load(){
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.trades)) return Object.assign(defaultState(), s);
+  } catch(e){}
+  return defaultState();
+}
+let S = load();
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch(e){ alert("Kaydedilemedi: tarayıcı depolaması dolu veya kapalı. JSON yedeği al."); }
+}
+
+/* ---------- Yardımcılar ---------- */
+function num(v){
+  const n = parseFloat(String(v).trim().replace(",", "."));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+function money(n){
+  const s = Math.abs(n).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+  return (n < 0 ? "-$" : "$") + s;
+}
+function price(n){ return Number(n).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:4}); }
+function qtyFmt(n){ return Number(n).toLocaleString("en-US", {minimumFractionDigits:0, maximumFractionDigits:QTY_DECIMALS}); }
+function floorQty(x){ const f = Math.pow(10, QTY_DECIMALS); return Math.floor(x * f + 1e-9) / f; }
+function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+function cls(n){ return n > 0 ? "pos" : n < 0 ? "neg" : ""; }
+
+/* ---------- Pozisyon hesabı (bot ile aynı mantık) ---------- */
+function calcPosition({balance, riskPct, entry, stop, side, capPct}){
+  if (balance <= 0) return {error: "Önce Ayarlar'dan sizing bakiyeni gir."};
+  if (side === "LONG" && stop >= entry) return {error: "LONG için stop entry'nin altında olmalı."};
+  if (side === "SHORT" && stop <= entry) return {error: "SHORT için stop entry'nin üstünde olmalı."};
+  const expectedLoss = balance * (riskPct / 100);
+  const riskPerShare = Math.abs(entry - stop);
+  const riskQty = expectedLoss / riskPerShare;
+  const maxPosValue = balance * (capPct / 100);
+  const maxPosQty = maxPosValue / entry;
+  let qty = floorQty(Math.min(riskQty, maxPosQty));
+  if (qty * entry > maxPosValue + 1e-9) qty = floorQty(maxPosQty);
+  if (qty <= 0) return {error: "Geçerli bir quantity hesaplanamadı. Değerleri kontrol et."};
+  const positionValue = qty * entry;
+  return {
+    qty, positionValue,
+    positionPct: positionValue / balance * 100,
+    expectedLoss, riskPerShare,
+    plannedRisk: qty * riskPerShare,
+    cappedByPosition: maxPosQty < riskQty,
+  };
+}
+
+/* ---------- Hesapla sekmesi ---------- */
+let side = "LONG";
+let lastCalc = null;
+
+function readForm(){
+  return {
+    ticker: $("ticker").value.trim().toUpperCase(),
+    tf: $("tf").value.trim(),
+    entry: num($("entry").value),
+    stop: num($("stop").value),
+    cap: num($("cap").value),
+    notes: $("notes").value.trim(),
+  };
+}
+
+function recalc(){
+  const f = readForm();
+  $("balView").value = S.balance > 0 ? money(S.balance) : "— (Ayarlar)";
+  const body = $("resBody");
+  lastCalc = null;
+  $("saveBtn").disabled = true;
+  if (!f.entry || !f.stop || !f.cap){
+    body.className = "mut"; body.textContent = "Entry, stop ve limit gir."; return;
+  }
+  if (f.cap > 100){
+    body.className = ""; body.innerHTML = '<div class="msg err">Pozisyon yüzdesi 100\'den büyük olamaz.</div>'; return;
+  }
+  const r = calcPosition({balance:S.balance, riskPct:S.maxRiskPct, entry:f.entry, stop:f.stop, side, capPct:f.cap});
+  if (r.error){ body.className = ""; body.innerHTML = '<div class="msg err">' + esc(r.error) + '</div>'; return; }
+  lastCalc = {f, r};
+  body.className = "";
+  body.innerHTML =
+    '<div class="res">' +
+      '<div class="it big"><div class="k">QTY (shares)' + (r.cappedByPosition ? ' · <b style="color:var(--warn)">MAX</b>' : '') + '</div><div class="v">' + qtyFmt(r.qty) + '</div></div>' +
+      '<div class="it"><div class="k">Pozisyon değeri</div><div class="v">' + money(r.positionValue) + '</div></div>' +
+      '<div class="it"><div class="k">Bakiyenin %\'si</div><div class="v">%' + r.positionPct.toFixed(2) + '</div></div>' +
+      '<div class="it"><div class="k">Planlanan risk</div><div class="v">' + money(r.plannedRisk) + '</div></div>' +
+      '<div class="it"><div class="k">Risk / share</div><div class="v">' + money(r.riskPerShare) + '</div></div>' +
+    '</div>' +
+    (r.cappedByPosition ? '<div class="msg warn">Pozisyon limiti devrede: risk ' + S.maxRiskPct + '% yerine ' + (r.plannedRisk / S.balance * 100).toFixed(2) + '% oldu.</div>' : '');
+  $("saveBtn").disabled = !f.ticker || !f.tf;
+}
+
+function saveTrade(){
+  if (!lastCalc) return;
+  const {f, r} = lastCalc;
+  const t = {
+    id: S.nextId++, status: "OPEN",
+    ticker: f.ticker, timeframe: f.tf, side,
+    entry: f.entry, stop_loss: f.stop,
+    expected_loss: r.expectedLoss, quantity: r.qty,
+    position_value: r.positionValue, position_pct: r.positionPct,
+    risk_per_share: r.riskPerShare, planned_risk: r.plannedRisk,
+    notes: f.notes || null, opened_at: new Date().toISOString(),
+    exit_price: null, actual_pnl: null, actual_r: null, closed_at: null,
+  };
+  S.trades.push(t); save();
+  clearForm();
+  $("resBody").className = "";
+  $("resBody").innerHTML = '<div class="msg ok">✅ Trade #' + t.id + ' kaydedildi: ' + esc(t.ticker) + ' ' + t.side + ' · QTY ' + qtyFmt(t.quantity) + '</div>';
+}
+
+function clearForm(){
+  ["ticker","tf","entry","stop","cap","notes"].forEach(i => $(i).value = "");
+  lastCalc = null; $("saveBtn").disabled = true;
+  recalc();
+}
+
+document.querySelectorAll("#side button").forEach(b => b.addEventListener("click", () => {
+  side = b.dataset.v;
+  document.querySelectorAll("#side button").forEach(x => x.classList.toggle("on", x === b));
+  recalc();
+}));
+["ticker","tf","entry","stop","cap","notes"].forEach(i => $(i).addEventListener("input", recalc));
+$("saveBtn").addEventListener("click", saveTrade);
+$("clearBtn").addEventListener("click", clearForm);
+
+/* ---------- Açık işlemler ---------- */
+function tradeHeader(t){
+  return '<div class="top"><div class="t">#' + t.id + ' ' + esc(t.ticker) + ' <span class="mut" style="font-weight:400">' + esc(t.timeframe) + '</span></div>' +
+         '<span class="tag ' + t.side.toLowerCase() + '">' + t.side + '</span></div>';
+}
+function renderOpen(){
+  const rows = S.trades.filter(t => t.status === "OPEN").sort((a,b) => b.id - a.id);
+  const el = $("tab-open");
+  if (!rows.length){ el.innerHTML = '<div class="empty">Açık trade yok.</div>'; return; }
+  el.innerHTML = rows.map(t =>
+    '<div class="card trade">' + tradeHeader(t) +
+    '<div class="meta">Entry ' + price(t.entry) + ' · SL ' + price(t.stop_loss) + '<br>Qty ' + qtyFmt(t.quantity) +
+    ' · Pozisyon ' + money(t.position_value) + ' · Risk ' + money(t.planned_risk) +
+    (t.notes ? '<br>📝 ' + esc(t.notes) : '') + '</div>' +
+    '<div class="acts"><input inputmode="decimal" placeholder="Exit fiyatı" id="ex' + t.id + '">' +
+    '<button class="btn sm" data-close="' + t.id + '">Kapat</button>' +
+    '<button class="btn sm danger" data-del="' + t.id + '">Sil</button></div>' +
+    '<div id="cm' + t.id + '"></div></div>'
+  ).join("");
+}
+
+function closeTrade(id){
+  const t = S.trades.find(x => x.id === id);
+  const exit = num($("ex" + id).value);
+  if (!t || t.status !== "OPEN") return;
+  if (!exit){ $("cm" + id).innerHTML = '<div class="msg err">Pozitif bir exit fiyatı gir.</div>'; return; }
+  const pnl = t.side === "LONG" ? (exit - t.entry) * t.quantity : (t.entry - exit) * t.quantity;
+  t.status = "CLOSED"; t.exit_price = exit; t.actual_pnl = pnl;
+  t.actual_r = t.planned_risk ? pnl / t.planned_risk : 0;
+  t.closed_at = new Date().toISOString();
+  save(); renderOpen();
+}
+function delTrade(id){
+  if (!confirm("Trade #" + id + " silinsin mi?")) return;
+  S.trades = S.trades.filter(x => x.id !== id); save();
+  renderOpen(); renderHist();
+}
+$("tab-open").addEventListener("click", e => {
+  const c = e.target.closest("[data-close]"), d = e.target.closest("[data-del]");
+  if (c) closeTrade(+c.dataset.close);
+  if (d) delTrade(+d.dataset.del);
+});
+
+/* ---------- Geçmiş ---------- */
+function renderHist(){
+  const rows = [...S.trades].sort((a,b) => b.id - a.id).slice(0, 100);
+  const el = $("tab-hist");
+  if (!rows.length){ el.innerHTML = '<div class="empty">Henüz kayıtlı trade yok.</div>'; return; }
+  el.innerHTML = rows.map(t => {
+    const closed = t.status === "CLOSED";
+    return '<div class="card trade">' + tradeHeader(t) +
+      '<div class="meta">' + (closed ? "⚪ CLOSED" : "🟢 OPEN") + ' · Entry ' + price(t.entry) + ' · SL ' + price(t.stop_loss) +
+      (closed ? ' · Exit ' + price(t.exit_price) : '') + '<br>Qty ' + qtyFmt(t.quantity) +
+      (closed ? ' · <b class="' + cls(t.actual_pnl) + '">' + money(t.actual_pnl) + ' · ' + (t.actual_r >= 0 ? "+" : "") + t.actual_r.toFixed(2) + 'R</b>' : '') +
+      (t.notes ? '<br>📝 ' + esc(t.notes) : '') + '</div>' +
+      '<div class="acts"><button class="btn sm danger" data-del="' + t.id + '">Sil</button></div></div>';
+  }).join("");
+}
+$("tab-hist").addEventListener("click", e => {
+  const d = e.target.closest("[data-del]"); if (d) delTrade(+d.dataset.del);
+});
+
+/* ---------- İstatistik ---------- */
+function renderStats(){
+  const closed = S.trades.filter(t => t.status === "CLOSED");
+  const open = S.trades.length - closed.length;
+  const wins = closed.filter(t => t.actual_pnl > 0).length;
+  const losses = closed.filter(t => t.actual_pnl < 0).length;
+  const be = closed.length - wins - losses;
+  const decided = wins + losses;
+  const totPnl = closed.reduce((a,t) => a + t.actual_pnl, 0);
+  const totR = closed.reduce((a,t) => a + t.actual_r, 0);
+  const n = closed.length;
+  const best = n ? Math.max(...closed.map(t => t.actual_pnl)) : 0;
+  const worst = n ? Math.min(...closed.map(t => t.actual_pnl)) : 0;
+  const grossW = closed.filter(t => t.actual_pnl > 0).reduce((a,t) => a + t.actual_pnl, 0);
+  const grossL = Math.abs(closed.filter(t => t.actual_pnl < 0).reduce((a,t) => a + t.actual_pnl, 0));
+  const pf = grossL ? (grossW / grossL).toFixed(2) : (grossW ? "∞" : "—");
+  const item = (k, v, c) => '<div class="it"><div class="k">' + k + '</div><div class="v ' + (c||"") + '">' + v + '</div></div>';
+  $("tab-stats").innerHTML = '<div class="card"><h2>Journal stats</h2><div class="res">' +
+    item("Kapalı trade", n) + item("Açık trade", open) +
+    item("Win / Loss / BE", wins + " / " + losses + " / " + be) +
+    item("Win rate", "%" + (decided ? (wins / decided * 100).toFixed(2) : "0.00")) +
+    item("Toplam P/L", money(totPnl), cls(totPnl)) + item("Ortalama P/L", money(n ? totPnl / n : 0), cls(totPnl)) +
+    item("Toplam R", (totR >= 0 ? "+" : "") + totR.toFixed(2) + "R", cls(totR)) +
+    item("Ortalama R", (n && totR / n >= 0 ? "+" : "") + (n ? totR / n : 0).toFixed(2) + "R", cls(totR)) +
+    item("En iyi trade", money(best), cls(best)) + item("En kötü trade", money(worst), cls(worst)) +
+    item("Profit factor", pf) +
+    '</div></div>';
+}
+
+/* ---------- Ayarlar / yedek ---------- */
+function renderSettings(){
+  $("setBal").value = S.balance > 0 ? S.balance : "";
+  $("setRisk").value = S.maxRiskPct;
+}
+$("setSave").addEventListener("click", () => {
+  const b = num($("setBal").value), r = num($("setRisk").value);
+  const m = $("setMsg");
+  if (!b || !r){ m.innerHTML = '<div class="msg err">Bakiye ve risk % pozitif olmalı.</div>'; return; }
+  if (r > 100){ m.innerHTML = '<div class="msg err">Risk % 100\'den büyük olamaz.</div>'; return; }
+  S.balance = b; S.maxRiskPct = r; save();
+  m.innerHTML = '<div class="msg ok">✅ Sizing bakiyesi: ' + money(b) + ' · Max risk: %' + r + '</div>';
+  recalc();
+});
+function download(name, text, type){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], {type}));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const stamp = () => new Date().toISOString().slice(0,10);
+$("exJson").addEventListener("click", () => download("swing-journal-" + stamp() + ".json", JSON.stringify(S, null, 2), "application/json"));
+$("exCsv").addEventListener("click", () => {
+  const cols = ["id","status","ticker","timeframe","side","entry","stop_loss","quantity","position_value","position_pct","risk_per_share","planned_risk","exit_price","actual_pnl","actual_r","opened_at","closed_at","notes"];
+  const q = v => v == null ? "" : '"' + String(v).replace(/"/g, '""') + '"';
+  const csv = [cols.join(",")].concat(S.trades.map(t => cols.map(c => q(t[c])).join(","))).join("\n");
+  download("swing-journal-" + stamp() + ".csv", csv, "text/csv");
+});
+$("imBtn").addEventListener("click", () => $("imFile").click());
+$("imFile").addEventListener("change", e => {
+  const file = e.target.files[0]; if (!file) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result);
+      if (!d || !Array.isArray(d.trades)) throw new Error("format");
+      if (!confirm("Mevcut veriler yedekteki verilerle DEĞİŞTİRİLECEK. Devam?")) return;
+      S = Object.assign(defaultState(), d); save(); renderSettings(); recalc();
+      $("bkMsg").innerHTML = '<div class="msg ok">✅ ' + S.trades.length + ' trade yüklendi.</div>';
+    } catch(err){ $("bkMsg").innerHTML = '<div class="msg err">Geçersiz yedek dosyası.</div>'; }
+    e.target.value = "";
+  };
+  rd.readAsText(file);
+});
+$("wipe").addEventListener("click", () => {
+  if (!confirm("TÜM trade'ler ve ayarlar silinecek. Emin misin?")) return;
+  if (!confirm("Bu işlem geri alınamaz. Yedek aldın mı?")) return;
+  S = defaultState(); save(); renderSettings(); recalc();
+});
+
+/* ---------- Sekmeler ---------- */
+const renderers = {calc: recalc, open: renderOpen, hist: renderHist, stats: renderStats, set: renderSettings};
+$("nav").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const t = b.dataset.t;
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  ["calc","open","hist","stats","set"].forEach(k => $("tab-" + k).classList.toggle("hide", k !== t));
+  renderers[t]();
+  window.scrollTo(0, 0);
+});
+
+recalc();
+
+/* ---------- Offline (service worker) ---------- */
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
